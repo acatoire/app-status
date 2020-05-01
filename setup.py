@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="app-status-acatoire",
+    name="app-status",
     version="0.0.1",
     author="Axel Catoire",
     author_email="axel.catoire@gmail.com",
