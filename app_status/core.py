@@ -1,7 +1,8 @@
 """
 A simple blynk application status screen manager
 
-It allows to post application status in an easy to build blynk app
+It allows to post application status in an easy to build blynk phone application
+
 """
 
 import blynklib
@@ -29,7 +30,7 @@ class AppStatus:
                             the id is the virtual pin number to be use
                             the value can be a string or a int/float
 
-        :return: none
+        :return: None
         """
         # Needed in case of first execution
         self.blynk.run()
@@ -41,67 +42,185 @@ class AppStatus:
         self.blynk.run()
 
 
+class TestRunElements:
+    """
+    Sub class to manage the test run information
+
+    """
+
+    name = "no name"
+    date = "--/--/---- (--:--)"
+    total = 0
+    failed = 0
+    blocked = 0
+    actual = 0
+    succeed = 0
+
+
 class TestRunStatus(AppStatus):
     """
     Sub class to manage the status of a test run application
 
     """
 
+    # Maximum number of managed test runs
+    MAX_RUN = 4
+
+    # Pin definition
+    PIN_NAME = 0
+    PIN_DATE = 1
+    PIN_STATUS_TEXT = 2
+    PIN_STATUS_GRAPH = 3
+    PIN_TYPES = 4
+    PIN_LED = 5
+
     def __init__(self, blink_key):
         super().__init__(blink_key)
 
-        self.name = "no name"
-        self.date = "--/--/---- (--:--)"
-        self.total = 0
-        self.failed = 0
-        self.blocked = 0
-        self.actual = 0
-        self.succeed = 0
+        self.test_runs = []
+        for _ in range(self.MAX_RUN):
+            self.test_runs.append(TestRunElements())
 
-    # TODO init_datetime
-
-    def update(self):
+    def start(self, run_id: int, total: int, name: str = None):
         """
-        Method to sync test run information values with the blynk phone application
+        Method to sync test run information with the phone application at startup
 
-        :return: none
+        :param run_id: test run id to be affected
+        :param total: total number of test for this run
+        :param name: name of test run
+        :return: None
         """
 
-        # TODO set number of leading zero depending on max value
-        print(
-            "Status sent: {} {}/{} with {}S - {}F - {}B".format(self.date,
-                                                                self.actual,
-                                                                self.total,
-                                                                self.succeed,
-                                                                self.failed,
-                                                                self.blocked))
+        # Clean the run
+        self.test_runs[run_id] = TestRunElements()
 
-        status_dict = {}
-        # Test run name
-        status_dict[0] = self.name
-        # Test run start datetime
-        status_dict[1] = self.date
-        # Test run advance status string
-        status_dict[2] = "{}/{}".format(self.actual, self.total)
-        # Test run advance status percent
-        status_dict[3] = self.actual / self.total * 100
-        # Test run result type numbers
-        status_dict[4] = "S{} F{} B{}".format(self.succeed, self.failed, self.blocked)
-        # Test run led TODO manage color
-        status_dict[5] = 255
+        if name is not None:
+            self.test_runs[run_id].name = name
 
-        self.post_dict(status_dict)
+        self.test_runs[run_id].total = total
 
-    def stop(self):
+        # Init the start run date
+        from datetime import datetime
+        self.test_runs[run_id].date = datetime.now().strftime("%d-%m-%Y (%H:%M)")
+
+        self.__send_all(run_id)
+
+    def update(self, run_id: int = None,
+               actual: int = None, succeed: int = None, failed: int = None, blocked: int = None):
+        """
+        Method to sync test run information values with the phone application
+
+        :param run_id: test run id to be updated
+        :param actual: (optional) updated actual before send
+        :param succeed: (optional) updated succeed before send
+        :param failed: (optional) updated failed before send
+        :param blocked: (optional) updated blocked before send
+        :return: None
+        """
+
+        if run_id is None:
+            print("Test run id is missing, Nothing to do")
+            return
+
+        if self.test_runs[run_id].total == 0:
+            raise ValueError("The total value has not been setup, run init() first.")
+
+        # Update givens values
+        if actual is not None:
+            self.test_runs[run_id].actual = actual
+
+        if succeed is not None:
+            self.test_runs[run_id].succeed = succeed
+
+        if failed is not None:
+            self.test_runs[run_id].failed = failed
+
+        if blocked is not None:
+            self.test_runs[run_id].blocked = blocked
+
+        self.__send_update(run_id)
+
+    def stop(self, run_id):
         """
         Sent a stop information to the blynk phone application
-        :return:
+        :return: None
         """
 
         print("Status sent: stop")
 
+
+        offset = run_id * 10
+
         status_dict = {}
         # Test run led
-        status_dict[5] = 0
+        status_dict[offset + self.PIN_LED] = 0
+
+        self.post_dict(status_dict)
+
+    def __send_all(self, run_id):
+        """
+        Send all info of a test run
+        :param run_id: test run id to be updated
+        :return: None
+        """
+
+        offset = run_id * 10
+
+        print("Start run {} - {} @ {} with {} tests".format(run_id,
+                                                            self.test_runs[run_id].name,
+                                                            self.test_runs[run_id].date,
+                                                            self.test_runs[run_id].total))
+
+        status_dict = {}
+        # Test run name
+        status_dict[offset + self.PIN_NAME] = self.test_runs[run_id].name
+        # Test run start datetime
+        status_dict[offset + self.PIN_DATE] = self.test_runs[run_id].date
+        # Test run advance status string
+        status_dict[offset + self.PIN_STATUS_TEXT] = "{}/{}".format(self.test_runs[run_id].actual,
+                                                                    self.test_runs[run_id].total)
+        # Test run advance status percent
+        percent = self.test_runs[run_id].actual / self.test_runs[run_id].total * 100
+        status_dict[offset + self.PIN_STATUS_GRAPH] = percent
+        # Test run result type numbers
+        status_dict[offset + self.PIN_TYPES] = "S{} F{} B{}".format(self.test_runs[run_id].succeed,
+                                                                    self.test_runs[run_id].failed,
+                                                                    self.test_runs[run_id].blocked)
+        # Test run led TODO manage color
+        status_dict[offset + self.PIN_LED] = 255
+
+        self.post_dict(status_dict)
+
+    def __send_update(self, run_id):
+        """
+        Send updated info of a test run
+        :param run_id: test run id to be updated
+        :return: None
+        """
+
+        offset = run_id * 10
+
+        # TODO set number of leading zero depending on max value
+        print("Update run {}: {} {}/{} with {}S - {}F - {}B".format(run_id,
+                                                                    self.test_runs[run_id].date,
+                                                                    self.test_runs[run_id].actual,
+                                                                    self.test_runs[run_id].total,
+                                                                    self.test_runs[run_id].succeed,
+                                                                    self.test_runs[run_id].failed,
+                                                                    self.test_runs[run_id].blocked))
+
+        status_dict = {}
+        # Test run advance status string
+        status_dict[offset + self.PIN_STATUS_TEXT] = "{}/{}".format(self.test_runs[run_id].actual,
+                                                                    self.test_runs[run_id].total)
+        # Test run advance status percent
+        percent = self.test_runs[run_id].actual / self.test_runs[run_id].total * 100
+        status_dict[offset + self.PIN_STATUS_GRAPH] = percent
+        # Test run result type number
+        status_dict[offset + self.PIN_TYPES] = "S{} F{} B{}".format(self.test_runs[run_id].succeed,
+                                                                    self.test_runs[run_id].failed,
+                                                                    self.test_runs[run_id].blocked)
+        # Test run led TODO manage color
+        status_dict[offset + self.PIN_LED] = 255
 
         self.post_dict(status_dict)

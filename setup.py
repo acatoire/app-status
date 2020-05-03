@@ -1,3 +1,8 @@
+"""
+Setup of app-status module
+
+"""
+
 import setuptools
 
 with open("README.md", "r") as fh:
@@ -5,7 +10,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="app-status",
-    version="0.0.1",
+    version="0.0.2",
     author="Axel Catoire",
     author_email="axel.catoire@gmail.com",
     description="A simple way to monitor your running application in real time, on your phone.",
@@ -14,8 +19,8 @@ setuptools.setup(
     url="https://github.com/acatoire/app_status",
     packages=setuptools.find_packages(),
     install_requires=[
-          'blynklib',
-      ],
+        'blynklib',
+        ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

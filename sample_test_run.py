@@ -4,8 +4,6 @@ The app is simulating a test run anf post the result on a remote screen.
 
 """
 
-
-import datetime
 import time
 import random
 from app_status import TestRunStatus
@@ -18,40 +16,43 @@ CHANCE = [0, 0, 0, 0, 1]
 
 def main():
     """
-    Main method for the test run simulation app
+    Main method for the multiple test run simulation app
+
     :return: None
     """
 
     # init steps timing
     last_event = 0
     event_period_s = 3
+    total = 10
 
     # create blynk status object
     status = TestRunStatus(BLYNK_AUTH)
 
     # fill up test run base info
-    status.name = "Test run name"
-    status.date = datetime.datetime.now().strftime("%d-%m-%Y (%H:%M)")
-    status.actual = 0
-    status.total = 10
+    status.start(0, total, "Test run name")
+
+    last_event = time.time()
+
+    actual = 0
+    failed = 0
+    blocked = 0
 
     # Generate test steps
-    while status.actual < status.total:
+    while actual < total:
 
         now = time.time()
         if now - last_event > event_period_s:
             last_event = now
 
-            status.actual += 1
-            status.failed += random.choice(CHANCE)
-            status.blocked += random.choice(CHANCE)
-            status.succeed = status.actual - status.failed - status.blocked
+            actual += 1
+            failed += random.choice(CHANCE)
+            blocked += random.choice(CHANCE)
+            succeed = actual - failed - blocked
 
-            status.update()
+            status.update(run_id=0, actual=actual, succeed=succeed, failed=failed, blocked=blocked)
 
-            # TODO generate sub steps
-
-    status.stop()
+    status.stop(0)
 
 
 if __name__ == "__main__":
