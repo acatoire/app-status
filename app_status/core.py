@@ -42,7 +42,7 @@ class AppStatus:
         self.blynk.run()
 
 
-class TestRunElements:
+class RunElements:
     """
     Sub class to manage the test run information
 
@@ -57,7 +57,7 @@ class TestRunElements:
     succeed = 0
 
 
-class TestRunStatus(AppStatus):
+class RunStatus(AppStatus):
     """
     Sub class to manage the status of a test run application
 
@@ -79,7 +79,7 @@ class TestRunStatus(AppStatus):
 
         self.test_runs = []
         for _ in range(self.MAX_RUN):
-            self.test_runs.append(TestRunElements())
+            self.test_runs.append(RunElements())
 
     def start(self, run_id: int, total: int, name: str = None):
         """
@@ -92,7 +92,7 @@ class TestRunStatus(AppStatus):
         """
 
         # Clean the run
-        self.test_runs[run_id] = TestRunElements()
+        self.test_runs[run_id] = RunElements()
 
         if name is not None:
             self.test_runs[run_id].name = name
@@ -105,30 +105,21 @@ class TestRunStatus(AppStatus):
 
         self.__send_all(run_id)
 
-    def update(self, run_id: int = None,
-               actual: int = None, succeed: int = None, failed: int = None, blocked: int = None):
+    def update(self, run_id: int, succeed: int = None, failed: int = None, blocked: int = None):
         """
         Method to sync test run information values with the phone application
 
         :param run_id: test run id to be updated
-        :param actual: (optional) updated actual before send
         :param succeed: (optional) updated succeed before send
         :param failed: (optional) updated failed before send
         :param blocked: (optional) updated blocked before send
         :return: None
         """
 
-        if run_id is None:
-            print("Test run id is missing, Nothing to do")
-            return
-
         if self.test_runs[run_id].total == 0:
             raise ValueError("The total value has not been setup, run init() first.")
 
         # Update givens values
-        if actual is not None:
-            self.test_runs[run_id].actual = actual
-
         if succeed is not None:
             self.test_runs[run_id].succeed = succeed
 
@@ -138,11 +129,67 @@ class TestRunStatus(AppStatus):
         if blocked is not None:
             self.test_runs[run_id].blocked = blocked
 
+        self.test_runs[run_id].actual = (self.test_runs[run_id].succeed
+                                         + self.test_runs[run_id].failed
+                                         + self.test_runs[run_id].blocked)
+
+        self.__send_update(run_id)
+
+    def add_blocked(self, run_id, value: int = None):
+        """
+        Increment the blocked value
+        :param run_id: test run id to be updated
+        :param value: (optional) increment other than 1
+        :return: None
+        """
+
+        if value is None:
+            self.test_runs[run_id].actual += 1
+            self.test_runs[run_id].blocked += 1
+        else:
+            self.test_runs[run_id].actual += value
+            self.test_runs[run_id].blocked += value
+
+        self.__send_update(run_id)
+
+    def add_succeed(self, run_id, value: int = None):
+        """
+        Increment the succeed value
+        :param run_id: test run id to be updated
+        :param value: (optional) increment other than 1
+        :return: None
+        """
+
+        if value is None:
+            self.test_runs[run_id].actual += 1
+            self.test_runs[run_id].succeed += 1
+        else:
+            self.test_runs[run_id].actual += value
+            self.test_runs[run_id].succeed += value
+
+        self.__send_update(run_id)
+
+    def add_failed(self, run_id, value: int = None):
+        """
+        Increment the failed value
+        :param run_id: test run id to be updated
+        :param value: (optional) increment other than 1
+        :return: None
+        """
+
+        if value is None:
+            self.test_runs[run_id].actual += 1
+            self.test_runs[run_id].failed += 1
+        else:
+            self.test_runs[run_id].actual += value
+            self.test_runs[run_id].failed += value
+
         self.__send_update(run_id)
 
     def stop(self, run_id):
         """
         Sent a stop information to the blynk phone application
+        :param run_id: test run id to be updated
         :return: None
         """
 

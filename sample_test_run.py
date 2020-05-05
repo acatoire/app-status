@@ -6,7 +6,7 @@ The app is simulating a test run anf post the result on a remote screen.
 
 import time
 import random
-from app_status import TestRunStatus
+from app_status import RunStatus
 
 
 BLYNK_AUTH = 'xz7QdnPAfTMVm4247CGRb0jVjgXF1byY'
@@ -27,7 +27,7 @@ def main():
     total = 10
 
     # create blynk status object
-    status = TestRunStatus(BLYNK_AUTH)
+    status = RunStatus(BLYNK_AUTH)
 
     # fill up test run base info
     status.start(0, total, "Test run name")

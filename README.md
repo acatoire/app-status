@@ -30,6 +30,11 @@ TODO
 TODO
 Describe how to install / setup your local environement / add link to demo version.
 
+## Test
+
+`coverage run -m unittest discover`
+`coverage html`
+
 ## Code Examples
 Show examples of usage:
 `put-your-code-here`
