@@ -10,7 +10,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="app-status",
-    version="0.0.3",
+    version="0.0.4",
     author="Axel Catoire",
     author_email="axel.catoire@gmail.com",
     description="A simple way to monitor your running application in real time, on your phone.",

@@ -30,7 +30,7 @@ def main():
     status = RunStatus(BLYNK_AUTH)
 
     # fill up test run base info
-    status.start(0, total, "Test run name")
+    status.start(total, "Test run name")
 
     last_event = time.time()
 
@@ -50,9 +50,9 @@ def main():
             blocked += random.choice(CHANCE)
             succeed = actual - failed - blocked
 
-            status.update(run_id=0, actual=actual, succeed=succeed, failed=failed, blocked=blocked)
+            status.update(succeed=succeed, failed=failed, blocked=blocked)
 
-    status.stop(0)
+    status.stop()
 
 
 if __name__ == "__main__":

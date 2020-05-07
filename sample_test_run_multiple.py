@@ -27,13 +27,15 @@ def main():
 
     total = [20, 15, 30, 10]
 
-    # create blynk status object
-    status = RunStatus(BLYNK_AUTH)
+    # create status object table
+    status = []
 
     # fill up test run start info
     for i in range(4):
-        status.start(i, total[i], "Run {}".format(i))
+        status.append(RunStatus(BLYNK_AUTH, i))
+        status[i].start(total[i], "Run {}".format(i))
 
+    # TODO random progress
     # Generate test steps
     for actual in range(max(total)):
 
@@ -41,18 +43,18 @@ def main():
         time.sleep(event_period_s)
 
         for i in range(4):
-            if actual < status.test_runs[i].total:
+            if actual < status[i].test_run.total:
 
                 if random.choice(CHANCE_SUCCESS):
-                    status.add_succeed(i)
+                    status[i].add_succeed()
                 elif random.choice(CHANCE_FAILED):
-                    status.add_failed(i)
+                    status[i].add_failed()
                 else:
-                    status.add_blocked(i)
+                    status[i].add_blocked()
 
     time.sleep(event_period_s)
     for i in range(4):
-        status.stop(i)
+        status[i].stop()
 
 
 if __name__ == "__main__":
